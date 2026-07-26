@@ -22,3 +22,6 @@
 
 ## Results
 - LED blinks when: 
+
+## Answers
+- LED blinks constantly after uploading the script to the board
