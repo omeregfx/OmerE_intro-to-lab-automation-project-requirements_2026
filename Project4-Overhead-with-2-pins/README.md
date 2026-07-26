@@ -33,3 +33,15 @@ enter the delay in usec here:  __________
  - Comparison of AI changes if any:
  - Commit and push the two programs and the README into the repository
 
+## Answers
+## Exercise 1
+- The delay time in usec is 0.001
+![alt text](<Screenshot exercise1.png>)
+
+## Exercise 2
+- The delay time in usec is 0.001
+![alt text](<Screenshot exercise2.png>)
+
+## Exercise 3
+- The delay time in usec now is 0
+![alt text](<Screenshot exercise3.png>)
