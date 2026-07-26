@@ -57,3 +57,7 @@ run code:
 Paste screenshots below.
 Comparison of AI changes if any:
 ![alt text](<צילום מסך 2026-07-12 132359.png>)
+
+## Answers
+![alt text](<Screenshot 1ms.png>)
+![alt text](<Screenshot 1us.png>)

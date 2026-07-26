@@ -23,6 +23,7 @@
 */
 
 int LEDpin=4;
+int DelayTime=1;
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -33,7 +34,7 @@ void setup() {
 // the loop function runs over and over again forever
 void loop() {
   digitalWrite(LEDpin, HIGH);  // change state of the LED by setting the pin to the HIGH voltage level
-  delay(1);                      // wait for a second
+  delayMicroseconds(DelayTime);                      // wait for the defined delay time
   digitalWrite(LEDpin, LOW);   // change state of the LED by setting the pin to the LOW voltage level
-  delay(1);                      // wait for a second
+  delayMicroseconds(DelayTime);                      // wait for the defined delay time
 }
