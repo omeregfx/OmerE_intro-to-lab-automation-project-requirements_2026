@@ -30,3 +30,9 @@
 - led blinks when:
 - led is constant when:
 - buzzer plays when: 
+
+## Answers
+- Pressure value: ~100370 Pa
+- Led blinks when I hold the button
+- Let is constant when I go back to selection menu
+- Buzzer plays whenever I go back to selection menu
