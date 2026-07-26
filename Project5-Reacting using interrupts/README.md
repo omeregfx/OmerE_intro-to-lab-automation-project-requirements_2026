@@ -33,4 +33,5 @@ answer here: __________
  - Comparison of AI changes if any:
  - commit and upload your code in this project folder.
 
-
+## Answers
+The LED doesn't work when applying the for loop because it forces the arduino to exceute a massive calculation in every run of the loop.
