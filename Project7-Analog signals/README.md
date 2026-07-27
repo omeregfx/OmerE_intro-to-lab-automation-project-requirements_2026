@@ -41,6 +41,8 @@ Documentation on Servo [here](https://wiki.seeedstudio.com/Grove-Servo/)
  - Comparison of AI changes if any:
 - commit and push both .ino files and their folders to your repository
 
-
+## Answers
+- The range of the rotary values is 0-1023.
+- 
 
 
