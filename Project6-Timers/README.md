@@ -27,3 +27,13 @@ add a screen shot from the logic analyzer below:
 - change the LED time ON from 5 seconds to 30 ms, measure in the scope the time the LED is ON. is it 30 ms? Why or why not?
 answer here: __________
 paste a screen shot from the scope below:
+
+## Answers
+- Screenshot of the log analyzer without the for loop:
+![alt text](<Screenshot no delay.png>)
+
+- The LED doesn't turn off after 5 seconds. This is because the calculation in the main loop is preventing the Arduino from checking if millis() - startTime >= 5000 until it is done.
+![alt text](<Screenshot with delay.png>)
+
+- The time that the LED is on is ~28ms. This is because the Arduino Uno's Timer 2 generates its timebase using fixed hardware prescaler ratios. Because the system clock frequency cannot be divided down to yield a perfect whole number for every millisecond value, the library rounds the requested tick count to the nearest attainable hardware match. For very short durations like 30ms, this quantization rounding introduces a noticeable percentage of error.
+![alt text](<Screenshot 30ms.png>)

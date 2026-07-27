@@ -9,20 +9,24 @@ void setup() {
   // put your setup code here, to run once:
   pinMode(LED_PIN, OUTPUT);
   pinMode(Button_PIN, INPUT);
+  pinMode(Int_PIN, INPUT);
 
-  attachInterrupt(digitalPinToInterrupt(Int_PIN), handleButtonPress, RISING);
+  attachInterrupt(digitalPinToInterrupt(Int_PIN), handleButtonPress, CHANGE);
 
   Serial.println("System Initialized. Ready for button presses.");
 }
 
 void loop() {
-  if (digitalRead(Button_PIN) == HIGH) {
-      digitalWrite(LED_PIN, HIGH);
-    } else {
-      digitalWrite(LED_PIN, LOW);
-    }
+  for (int i = 0; i< 10000; i++){
+    Serial.println("calculating...");
+}
 }
 
 void handleButtonPress() {
-  buttonPressed = true;
+  buttonPressed = digitalRead(Int_PIN);
+  if (buttonPressed) {
+    digitalWrite(LED_PIN, HIGH);
+  } else {
+    digitalWrite(LED_PIN, LOW);
+  }
 }
