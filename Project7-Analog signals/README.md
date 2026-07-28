@@ -43,6 +43,14 @@ Documentation on Servo [here](https://wiki.seeedstudio.com/Grove-Servo/)
 
 ## Answers
 - The range of the rotary values is 0-1023.
-- 
+- The duty cycle is the percentage of time the digital signal remains at 5V during one full period. It ranges from 0% to 100%. 
+- The voltmeter measures equivalent DC average. Adjusting the duty cycle from 0% to 100% shifts the average voltage intensity from 0V to 5V.
+- When I use 30Hz instead of 50Hz for the PWM, I can slightly see the LED blinking instead of dimering.
+- Screenshot of the oscilloscope:
+![alt text](<Screenshot 2026-07-28 104750.png>)
 
-
+- The frequency used by the Servo package is ~52Hz
+- The duty cycle in the servo motor is much smaller compared to the duty cycle we used in the LED.
+- The range of angles in our servo not the same as the range of angles in the Servo package. The Servo package says the range of angles is 0 to 180, while I managed to move the servo motor in a range of angles of 0 to 168.
+- Screenshot of the maximum duty cycle of the servo:
+![alt text](<Screenshot pwm servo.png>)
