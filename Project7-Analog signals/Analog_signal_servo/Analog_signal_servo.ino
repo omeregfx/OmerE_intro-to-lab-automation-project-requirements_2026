@@ -1,6 +1,7 @@
 #include <Servo.h>
 
 Servo motor;
+
 int Knob_PIN = 0;
 int Motor_PIN = 7;
 int MovementThreshold = 3;
@@ -14,6 +15,7 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
+  // digitalWrite(LED_PIN, LOW);
   int RawRead = analogRead(Knob_PIN);
   int CurrentAngle = map(RawRead, 0, 1023, 0, 168);
 
