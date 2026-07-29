@@ -54,7 +54,7 @@ def main():
         """
         pin_value = data[2]
         
-        # 1 (HIGH)) means the button is pressed (assuming pull-up logic)
+        # 1 (HIGH) means the button is pressed (Assumes an external pull-down resistor is wired)
         if pin_value == 1:
             window.write_event_value('-UPDATE_STATE-', ('BTN', 'PRESSED', 'green'))
             window.write_event_value('-TRIGGER_LED-', None)
@@ -67,8 +67,8 @@ def main():
     board.set_pin_mode_digital_output(LED_PIN)
     board.digital_write(LED_PIN, 0) 
     
-    # Configure Button Pin (Pin 6) with an internal pull-up resistor
-    board.set_pin_mode_digital_input_pullup(BUTTON_PIN)
+    # Configure Button Pin (Pin 6) as standard input. 
+    board.set_pin_mode_digital_input(BUTTON_PIN)
     
     # Configure Interrupt Pin (Pin 2) as standard input and attach the callback.
     # This reads the state changes coming from Pin 6 via your physical wire connection.
