@@ -61,3 +61,10 @@ In order to use the conda environment in VSCode, open a python file and then pre
 Paste a screenshot of the GUI here:
 
 Paste a screenshot of the logic analyzer here that presents the time the LED is ON when pressing the button.
+
+## Answers
+- Screenshot of the GUI:
+![alt text](<Screenshot GUI.png>)
+
+- Screenshot of the logic analyzer with the time the LED is on when pressing the button:
+![alt text](<Screenshot logicanalyzer.png>)

@@ -1,88 +1,80 @@
 #include <MsTimer2.h>
 
 // --- Pin Definitions ---
-int Button_PIN=6;
-int LED_PIN=4;
-int Int_PIN=2;
+int LED_PIN = 4;
+int Int_PIN = 2; // Button must be connected to Pin 2 for the interrupt
 
 // --- Global Variables ---
-volatile bool buttonPressed = false; // Flag set by ISR when button state changes
-volatile bool ledActive = false;    // Tracks if LED timer is currently running
-unsigned long ledONTime = 1000;     // Default ON time: 1000 ms (until updated via Serial)
+volatile bool buttonStateChanged = false; 
+volatile bool ledActive = false;    
+unsigned long ledONTime = 1000;     
 
 // --- Forward Declarations ---
 void handleButtonPress();
 void turn_off();
 
 void setup() {
-  // Initialize Serial communication
   Serial.begin(9600);
 
-  // Configure hardware pin modes
   pinMode(LED_PIN, OUTPUT);
-  // Ensure LED is initially OFF
   digitalWrite(LED_PIN, LOW);
-  pinMode(Button_PIN, INPUT);
-  pinMode(Int_PIN, INPUT);
+  
+  // Use INPUT_PULLUP to use the Arduino's internal resistor
+  // The button should connect Pin 2 to Ground.
+  pinMode(Int_PIN, INPUT); 
 
-  // Attach hardware interrupt to detect button press
+  // Trigger interrupt whenever the button state changes
   attachInterrupt(digitalPinToInterrupt(Int_PIN), handleButtonPress, CHANGE);
 }
 
 void loop() {
   // Monitor Serial Port for incoming user inputs
   if (Serial.available() > 0) {
-    // Read integer of variable length from serial input stream
     long recievedTime = Serial.parseInt();
 
-    // Clear remaining trailing characters (e.g., newline '\n' or carriage return '\r')
     while (Serial.available() > 0 && (Serial.peek() == '\n' || Serial.peek() == '\r')) {
       Serial.read();
     }
 
-    // Error handling and input validation
     if (recievedTime > 0) {
       ledONTime = (unsigned long)recievedTime;
-
-      // Print confirmation message back over Serial
-      Serial.print("I recieved:");
-      Serial.println(ledONTime);
-    } else if (recievedTime < 0) {
-      Serial.println("Error: Please send a positive integer for time in ms.");
+      // Removed the "I recieved:" print to keep serial comms clean for the GUI
     }
   }
 
   // Handle Button Press Event
-  if (buttonPressed) {
-    buttonPressed = false; // Reset interrupt flag
+  if (buttonStateChanged) {
+    buttonStateChanged = false; // Reset interrupt flag
+    
+    // Read the actual state of the pin
+    // With INPUT_PULLUP, LOW means the button is pressed down
+    int currentState = digitalRead(Int_PIN);
 
-    // Only start if the LED is not already on
-    if (!ledActive) {
-      ledActive = true;
-      digitalWrite(LED_PIN, HIGH); // Light up LED
+    if (currentState == HIGH) { // Button is pressed
+      if (!ledActive) {
+        ledActive = true;
+        digitalWrite(LED_PIN, HIGH); // Light up LED
+        Serial.println("1");         // State 1: Button and LED on
 
-      // Account for the MsTimer2 1 ms offset bug observed in Project 6
-      unsigned long timerDuration = ledONTime + 1;
-
-      // Configure and start hardware timer
-      MsTimer2::set(timerDuration, turn_off);
-      MsTimer2::start();
+        unsigned long timerDuration = ledONTime + 1;
+        MsTimer2::set(timerDuration, turn_off);
+        MsTimer2::start();
+      }
+    } else { // Button is released
+      Serial.println("2"); // State 2: Button off
     }
   }
 }
 
-// ISRs
-
-// ISR: Triggered on button press (FALLING edge on Pin 2)
-// Sets the volatile flag to be handled safely inside the main loop.
+// ISR: Triggered on any state change on Pin 2
 void handleButtonPress() {
-  buttonPressed = true;
+  buttonStateChanged = true;
 }
 
 // Timer Callback: Executed automatically when MsTimer2 expires.
-// Turns off the LED and stops the timer instance.
 void turn_off() {
   digitalWrite(LED_PIN, LOW);
   ledActive = false;
+  Serial.println("0"); // State 0: LED off
   MsTimer2::stop();
 }
