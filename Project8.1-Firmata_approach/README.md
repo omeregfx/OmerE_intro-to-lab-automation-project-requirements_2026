@@ -29,18 +29,28 @@
 Comparison of AI changes if any:
 
 Paste a screenshot of the GUI here:
+![alt text](<Screenshot GUI.png>)
 
 Paste a screenshot of the logic analyzer here that presents the time the LED is ON when pressing the button.
+![alt text](<Screenshot logic analyzer30ms.png>)
 
 ```
 What is the difference between the two versions (with pymata4 and firmata and without) of the script? Which one was easier to code? Where was thread handling easier?
 
-Answer: __________
-
+Answer: The pymata4 version was easier to code and the thread handling in it was also easier in my opinion.
 
 What can you say about the accuracy of the timing between the firmata version and your arduino code version?
 which one is more accurate and why?
 
 What are the advantages and disadvantages of using the pymata4 package?
 
-Answer: __________
+Answer: The Arduino C++ code is much more accurate.
+This is because that in the native Arduino approach, the timer and button detection logic reside directly on the microcontroller. 
+When the button is pressed, a hardware interrupt is triggered instantly, and the MsTimer2 library schedules the turning off of the LED down to millisecond precision.
+Advantages of using pymata4:
+- You do not need to write, compile, or upload C++ code every time you want to change your project's logic or pin assignments.
+- You upload the FirmataExpress sketch to the Arduino once, and the board effectively becomes a plug-and-play peripheral for any Python script.
+
+Disadvantages of using pymata4:
+- As noted above, pymata4 cannot guarantee strict real-time execution. If your application relies on microsecond precision, fast PWM generation, or tight time-critical sensor readings, pymata4 is unsuitable.
+

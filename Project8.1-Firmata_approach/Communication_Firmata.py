@@ -1,7 +1,6 @@
 import FreeSimpleGUI as sg
 from telemetrix import telemetrix
 import threading
-import time
 
 # --- Hardware Configuration ---
 COM_PORT = "COM4" 
@@ -99,8 +98,8 @@ def main():
             
             # Parse the time duration
             try:
-                duration_ms = float(values['-DURATION-'])
-                duration_s = duration_ms / 1000.0 
+                duration_ms = int(values['-DURATION-'])
+                duration_s = duration_ms / 1000 
             except ValueError:
                 duration_s = 0.03 # Default to 30ms
                 window['-LOG-'].update('! Invalid time format. Defaulting to 30ms.\n', append=True)
