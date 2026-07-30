@@ -24,3 +24,8 @@
 2. Add the corresponding csv files of your reaction times to the project folder.
 3. What can you say about the reaction times of the user? What do you think is the uncertainty in the measurements of a single reaction time?
 
+## Answers
+1. Screenshot of the GUI:
+![alt text](latency_histogram_20260729_150645.png)
+3. The average reaction time over 31 trials was 215.6 ms, and the median reaction time was 195 ms. It seems like the histogram has a clear positive skew. 
+The uncertainty of a single measurement is overwhelmingly driven by your natural human variance, which is approximately 61.5 ms in this data.
