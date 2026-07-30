@@ -17,16 +17,19 @@ const int BUTTON_PIN = 6; // Push button pin
 
 // --- Logic Constants ---
 const int HIGH_ANGLE_THRESHOLD = 140; // High threshold in degrees to trigger the alarm
-const int LOW_ANGLE_THRESHOLD = 20; // Low threshold in degrees to trigger the alarm
-const int LOOP_DELAY_MS = 300;   // Update rate for smooth servo movement
+const int LOW_ANGLE_THRESHOLD = 20;   // Low threshold in degrees to trigger the alarm
+const int LOOP_DELAY_MS = 0;        // Update rate for smooth servo movement
+const float MOVEMENT_THRESHOLD = 0.1; // Max allowed change in yVal per loop (spike filter)
 
 // --- Global Variables ---
 Servo fanServo;
 int currentAngle = 0;
 bool isBuzzerActive = false;
+float yVal = 0.0;
+float lastYVal = 0.0; // Tracks the previous reading to calculate the change
 
 // Button State Variables
-bool isFanPowerOn = true;     // Tracks whether user turned fan ON or OFF via button
+bool isFanPowerOn = false;     // Tracks whether user turned fan ON or OFF via button
 int lastButtonState = LOW;    // Remembers previous button state for edge detection
 
 void setup() {
@@ -70,14 +73,24 @@ void readButtonInput() {
 }
 
 /* 
- * Reads the accelerometer and maps the X-axis to a 0-165 degree angle 
+ * Reads the accelerometer, applies a noise filter, and maps to a 0-165 degree angle 
  */
-void calculateAngle() {
-  float yVal = Accelerometer.readY();
-  
-  // Multiply by 100 to use integer mapping
-  currentAngle = map(yVal * 100, -100, 100, 0, 165);
-  // currentAngle = constrain(currentAngle, 0, 165); 
+void calculateAngle() { 
+  // 1. Get the raw new reading
+  float newYVal = Accelerometer.readY();
+  newYVal = round(newYVal * 10.0) / 10.0; // Round to 1 decimal place
+
+  // 2. Check if the change is WITHIN the allowed threshold
+  if (abs(newYVal - lastYVal) < MOVEMENT_THRESHOLD) {
+    // It's a smooth movement, so we accept the new value and update the angle
+    yVal = newYVal;
+    currentAngle = map(yVal * 100, -100, 100, 0, 165);
+  }
+  // If the change was > 0.2, the 'if' statement is skipped. 
+  // yVal and currentAngle stay exactly what they were, preventing servo jitter!
+
+  // 3. Always update lastYVal so the system knows where the sensor actually is
+  lastYVal = newYVal;
 }
 
 /*
@@ -140,12 +153,14 @@ void updateOLEDDisplay() {
 }
 
 /*
- * Sends a comma-separated string to the PC: Time(ms),Angle,BuzzerState
+ * Sends a comma-separated string to the PC: Time(ms),yVal,Angle,BuzzerState
  */
 void sendDataToPython() {
   unsigned long currentTime = millis();
   
   Serial.print(currentTime);
+  Serial.print(",");
+  Serial.print(yVal);
   Serial.print(",");
   Serial.print(currentAngle);
   Serial.print(",");
