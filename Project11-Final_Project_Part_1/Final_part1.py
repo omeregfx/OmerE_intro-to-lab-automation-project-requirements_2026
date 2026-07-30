@@ -8,7 +8,7 @@ import csv
 import math
 
 # --- Configuration ---
-# CHANGE THIS to match your Arduino's COM port (e.g., 'COM3' on Windows, '/dev/ttyACM0' on Mac/Linux)
+# CHANGE THIS to match your Arduino's COM port (e.g., 'COM4' on Windows, '/dev/ttyACM0' on Mac/Linux)
 SERIAL_PORT = 'COM4' 
 BAUD_RATE = 9600
 CSV_FILENAME = 'sensor_data_log.csv'
@@ -33,34 +33,35 @@ class ArduinoMonitorApp:
         self.update_data()
 
     def setup_ui(self):
-            """Creates the canvas for the compass/gauge and LED."""
-            tk.Label(self.root, text="Live Servo Angle", font=("Arial", 14, "bold")).pack(pady=5)
-            
-            # Gauge Canvas
-            self.canvas = tk.Canvas(self.root, width=200, height=150, bg="white")
-            self.canvas.pack()
-            
-            # Draw the base arc for the gauge (sweeps from 0 to 165 degrees)
-            self.canvas.create_arc(10, 10, 190, 190, start=0, extent=165, outline="black", style=tk.ARC, width=2)
-            
-            # Initialize the pointer pointing to 0 degrees (straight to the right)
-            self.pointer = self.canvas.create_line(100, 100, 180, 100, fill="blue", width=3)
-            
-            self.angle_label = tk.Label(self.root, text="Angle: -- deg", font=("Arial", 12))
-            self.angle_label.pack(pady=5)
-            
-            # Buzzer LED Canvas
-            tk.Label(self.root, text="Buzzer State", font=("Arial", 12, "bold")).pack(pady=5)
-            self.led_canvas = tk.Canvas(self.root, width=50, height=50)
-            self.led_canvas.pack()
-            self.led = self.led_canvas.create_oval(10, 10, 40, 40, fill="gray")
+        """Creates the canvas for the compass/gauge and LED."""
+        tk.Label(self.root, text="Live Servo Angle", font=("Arial", 14, "bold")).pack(pady=5)
+        
+        # Gauge Canvas
+        self.canvas = tk.Canvas(self.root, width=200, height=150, bg="white")
+        self.canvas.pack()
+        
+        # Draw the base arc for the gauge (sweeps from 0 to 165 degrees)
+        self.canvas.create_arc(10, 10, 190, 190, start=0, extent=165, outline="black", style=tk.ARC, width=2)
+        
+        # Initialize the pointer pointing to 0 degrees (straight to the right)
+        self.pointer = self.canvas.create_line(100, 100, 180, 100, fill="blue", width=3)
+        
+        self.angle_label = tk.Label(self.root, text="Angle: -- deg", font=("Arial", 12))
+        self.angle_label.pack(pady=5)
+        
+        # Buzzer LED Canvas
+        tk.Label(self.root, text="Buzzer State", font=("Arial", 12, "bold")).pack(pady=5)
+        self.led_canvas = tk.Canvas(self.root, width=50, height=50)
+        self.led_canvas.pack()
+        self.led = self.led_canvas.create_oval(10, 10, 40, 40, fill="gray")
 
     def init_csv(self):
         """Creates the CSV file and writes the header row."""
         try:
             with open(CSV_FILENAME, mode='w', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow(["Time (ms)", "Angle (deg)", "Buzzer State"])
+                # UPDATED: Added yVal to the CSV headers
+                writer.writerow(["Time (ms)", "yVal (G)", "Angle (deg)", "Buzzer State"])
         except Exception as e:
             print(f"Error creating CSV: {e}")
 
@@ -73,30 +74,35 @@ class ArduinoMonitorApp:
             print(f"WARNING: Could not connect to {SERIAL_PORT}. Please check the port.")
 
     def update_data(self):
-        """Reads from serial, updates GUI, and writes to CSV continuously."""
-        if self.serial_conn and self.serial_conn.in_waiting > 0:
-            try:
-                # Read and decode the line from Arduino
-                line = self.serial_conn.readline().decode('utf-8').strip()
-                
-                # Ensure we have valid data (Time, Angle, Buzzer)
-                if line and line.count(',') == 2:
-                    time_ms, angle_str, buzzer_str = line.split(',')
-                    angle = int(angle_str)
-                    buzzer_state = int(buzzer_str)
+            """Reads from serial, updates GUI, and writes to CSV continuously."""
+            if self.serial_conn and self.serial_conn.in_waiting > 0:
+                try:
+                    # NEW: Use a while loop to drain the entire backlog of data 
+                    # instead of just reading one single line.
+                    while self.serial_conn.in_waiting > 0:
+                        line = self.serial_conn.readline().decode('utf-8').strip()
+                        
+                        if line and line.count(',') == 3:
+                            time_ms, yval_str, angle_str, buzzer_str = line.split(',')
+                            
+                            yval = float(yval_str)
+                            angle = int(angle_str)
+                            buzzer_state = int(buzzer_str)
+                            
+                            # Log every line to the CSV so we don't lose history
+                            self.log_to_csv(time_ms, yval, angle, buzzer_state)
                     
-                    # Update GUI
+                    # OUTSIDE the while loop: 
+                    # We only update the visual GUI once using the most recent 'angle'
+                    # Updating graphics thousands of times a second causes freezing!
                     self.update_gui(angle, buzzer_state)
+                        
+                except Exception as e:
+                    # Catch decoding errors
+                    pass 
                     
-                    # Log to CSV
-                    self.log_to_csv(time_ms, angle, buzzer_state)
-                    
-            except Exception as e:
-                # Catch decoding or parsing errors (common when serial first connects)
-                pass 
-                
-        # Schedule this function to run again in 50ms
-        self.root.after(50, self.update_data)
+            # Schedule this function to run again in 50ms
+            self.root.after(50, self.update_data)
 
     def update_gui(self, angle, buzzer_state):
         """Updates the visual elements based on new data."""
@@ -116,12 +122,13 @@ class ArduinoMonitorApp:
         else:
             self.led_canvas.itemconfig(self.led, fill="gray")
 
-    def log_to_csv(self, time_ms, angle, buzzer_state):
+    def log_to_csv(self, time_ms, yval, angle, buzzer_state):
         """Appends a single row of data to the CSV."""
         try:
             with open(CSV_FILENAME, mode='a', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow([time_ms, angle, buzzer_state])
+                # UPDATED: Writing all 4 columns to the file
+                writer.writerow([time_ms, yval, angle, buzzer_state])
         except Exception as e:
             pass 
 

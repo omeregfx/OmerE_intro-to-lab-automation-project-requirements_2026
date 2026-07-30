@@ -1,6 +1,6 @@
 /*
  * Fan & Servo Controller System with Button Toggle
- * Reads accelerometer X-axis data to control a servo-mounted fan.
+ * Reads accelerometer Y-axis data to control a servo-mounted fan.
  * A push button on Pin 6 toggles the fan ON and OFF.
  * Triggers a buzzer and forces the fan off if the angle exceeds a safe threshold.
  * Outputs status via OLED display and Serial port.
@@ -18,19 +18,24 @@ const int BUTTON_PIN = 6; // Push button pin
 // --- Logic Constants ---
 const int HIGH_ANGLE_THRESHOLD = 140; // High threshold in degrees to trigger the alarm
 const int LOW_ANGLE_THRESHOLD = 20;   // Low threshold in degrees to trigger the alarm
-const int LOOP_DELAY_MS = 0;        // Update rate for smooth servo movement
+const int LOOP_DELAY_MS = 0;        // Main loop delay
 const float MOVEMENT_THRESHOLD = 0.1; // Max allowed change in yVal per loop (spike filter)
 
 // --- Global Variables ---
 Servo fanServo;
-int currentAngle = 0;
+int targetAngle = 0;  // Where the sensor wants the servo to go
+int currentAngle = 0; // Where the servo currently is physically located
 bool isBuzzerActive = false;
 float yVal = 0.0;
 float lastYVal = 0.0; // Tracks the previous reading to calculate the change
 
 // Button State Variables
-bool isFanPowerOn = false;     // Tracks whether user turned fan ON or OFF via button
-int lastButtonState = LOW;    // Remembers previous button state for edge detection
+bool isFanPowerOn = false;     
+int lastButtonState = LOW;    
+
+// --- NEW: Non-blocking Timer Variables ---
+unsigned long lastReportTime = 0;
+const int REPORT_INTERVAL_MS = 50; // How often to send data/update screen
 
 void setup() {
   // 1. Initialize Communications
@@ -49,12 +54,19 @@ void setup() {
 }
 
 void loop() {
+  // 1. These run as fast as possible for instantly responsive motor control
   readButtonInput();
   calculateAngle();
   updateHardwareState();
-  updateOLEDDisplay();
-  sendDataToPython();
   
+  // 2. These only run every 50ms so we don't overwhelm the PC or the OLED
+  if (millis() - lastReportTime >= REPORT_INTERVAL_MS) {
+    updateOLEDDisplay();
+    sendDataToPython();
+    lastReportTime = millis();
+  }
+  
+  // We keep the main delay at 0!
   delay(LOOP_DELAY_MS); 
 }
 
@@ -73,21 +85,28 @@ void readButtonInput() {
 }
 
 /* 
- * Reads the accelerometer, applies a noise filter, and maps to a 0-165 degree angle 
+ * Reads the accelerometer, applies a deadzone and noise filter, 
+ * and calculates the target angle 
  */
 void calculateAngle() { 
   // 1. Get the raw new reading
   float newYVal = Accelerometer.readY();
-  newYVal = round(newYVal * 10.0) / 10.0; // Round to 1 decimal place
 
-  // 2. Check if the change is WITHIN the allowed threshold
-  if (abs(newYVal - lastYVal) < MOVEMENT_THRESHOLD) {
-    // It's a smooth movement, so we accept the new value and update the angle
-    yVal = newYVal;
-    currentAngle = map(yVal * 100, -100, 100, 0, 165);
+  // -- DEADZONE FILTER --
+  // If the reading is very close to 0 (between -0.15 and 0.15), force it perfectly flat
+  if (abs(newYVal) < 0.1) {
+    newYVal = 0.0;
   }
-  // If the change was > 0.2, the 'if' statement is skipped. 
-  // yVal and currentAngle stay exactly what they were, preventing servo jitter!
+
+  // Round to 1 decimal place
+  newYVal = round(newYVal * 10.0) / 10.0; 
+
+  // 2. Check if the change is WITHIN the allowed threshold (using your updated < sign)
+  if (abs(newYVal - lastYVal) < MOVEMENT_THRESHOLD) {
+    // It's a smooth movement, so we accept the new value and set the target
+    yVal = newYVal;
+    targetAngle = map(yVal * 100, -100, 100, 0, 165);
+  }
 
   // 3. Always update lastYVal so the system knows where the sensor actually is
   lastYVal = newYVal;
@@ -97,10 +116,20 @@ void calculateAngle() {
  * Controls the Fan, Servo, and Buzzer based on angle and button state
  */
 void updateHardwareState() {
-  // Move the servo to the new angle
-  fanServo.write(currentAngle);
   
-  // Safety check against threshold
+  // Smoothly move the servo to the target angle in 1-degree steps
+  while (currentAngle != targetAngle) {
+    if (currentAngle < targetAngle) {
+      currentAngle++;
+    } else {
+      currentAngle--;
+    }
+    
+    fanServo.write(currentAngle);
+    delay(10); // 10ms delay gives the physical motor time to move 1 degree smoothly
+  }
+  
+  // Safety check against threshold using the current physical angle
   if (currentAngle > HIGH_ANGLE_THRESHOLD || currentAngle < LOW_ANGLE_THRESHOLD) {
     // Exceeded threshold: Force fan OFF and sound alarm
     isBuzzerActive = true;
