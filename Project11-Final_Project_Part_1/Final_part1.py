@@ -11,7 +11,7 @@ import math
 # CHANGE THIS to match your Arduino's COM port (e.g., 'COM3' on Windows, '/dev/ttyACM0' on Mac/Linux)
 SERIAL_PORT = 'COM4' 
 BAUD_RATE = 9600
-CSV_FILENAME = '/Project11-Final_Project_Part_1/sensor_data_log.csv'
+CSV_FILENAME = 'sensor_data_log.csv'
 
 class ArduinoMonitorApp:
     def __init__(self, root):

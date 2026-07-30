@@ -18,7 +18,7 @@ const int BUTTON_PIN = 6; // Push button pin
 // --- Logic Constants ---
 const int HIGH_ANGLE_THRESHOLD = 140; // High threshold in degrees to trigger the alarm
 const int LOW_ANGLE_THRESHOLD = 20; // Low threshold in degrees to trigger the alarm
-const int LOOP_DELAY_MS = 200;   // Update rate for smooth servo movement
+const int LOOP_DELAY_MS = 300;   // Update rate for smooth servo movement
 
 // --- Global Variables ---
 Servo fanServo;
@@ -76,8 +76,8 @@ void calculateAngle() {
   float yVal = Accelerometer.readY();
   
   // Multiply by 100 to use integer mapping
-  currentAngle = map(yVal * 8, -1, 1, 0, 165);
-  currentAngle = constrain(currentAngle, 0, 165); 
+  currentAngle = map(yVal * 100, -100, 100, 0, 165);
+  // currentAngle = constrain(currentAngle, 0, 165); 
 }
 
 /*
